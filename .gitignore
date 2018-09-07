@@ -1,3 +1,9 @@
+# Config file, use the config.py.example.
+config.py
+
+#IDE Stuff
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

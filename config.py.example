@@ -1,0 +1,9 @@
+wikidot_site = "scp-wiki"
+wikidot_username = "username"
+wikidot_api_key = "apikey"
+wikidot_api_mode = "ro"
+
+# Acceptable arguments for wikidot_api_mode are "ro" (read-only) and "rw" (read-write).
+# In "ro" mode, ftpg will output text files to be saved manually.
+# In "rw" mode, ftpg will save the pages for you.
+# Make sure you're using the correct API key if you wish to use "rw" mode.
