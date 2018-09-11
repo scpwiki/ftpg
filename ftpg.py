@@ -21,7 +21,7 @@ sleep(0.25)
 a = BeautifulSoup(attributions['html'], 'html.parser')
 
 # Get the list of tales.
-taleslist = s.pages.select({'site': config.wikidot_site, "tags_all": ['tale', 'maria-jones']})
+taleslist = s.pages.select({'site': config.wikidot_site, "tags_all": ['tale']})
 
 # There are three sets of pages the generator needs to make.
 # 1. Tales by Title
@@ -89,7 +89,7 @@ index = ['#','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N
 # room under the 200k character limit.
 t_alpha = {}
 for character in index:
-    t_alpha[character] = ["[[# " + character + "]]\n[[div class=\"section\"]]\n+++ " + character + "\n[#top ⇑]\n||~ Title||~ Author||~ Created||"]
+    t_alpha[character] = ["[[# " + character + "]]\n[[div class=\"section\"]]\n+++ " + character + "\n[#top ⇑]\n||~ Title||~ Author||~ Created||\n"]
 
 for tale in t:
     # We're going to use the same format whether or not there is attribution metadata.
@@ -128,15 +128,17 @@ for tale in t:
 
 # Close out the div we opened for each group.
 for character in index:
-    t_alpha[character].append('[[/div]]')
+    t_alpha[character].append('[[/div]]\n')
 
 # We're going to break this output into multiple pages, starting from 1.
-pagename = "component:tales-by-title"
+pagename = "tales-by-title"
 pagecount = 1
 
 # Convert them to strings and check their lengths.
 for character in index:
     outstring = ''.join(t_alpha[character])
+    # We need to fix an invalid anchor by replacing it with Misc.
+    outstring = outstring.replace("[[# #]]\n", "[[# Misc]]\n")
     len_output = len(output)
     len_outstring = len(outstring)
     if len_output + len_outstring < 200000:
@@ -144,23 +146,21 @@ for character in index:
     else:
         # Save a text file or post to wikidot depending on config.wikidot_api_mode
         if config.wikidot_api_mode is "ro":
-            file_object = open(pagename + "-" + pagecount, "w")
+            file_object = open(pagename + "-" + str(pagecount), "w")
             file_object.write(''.join(output))
         elif config.wikidot_api_mode is "rw":
-            save = s.pages.save_one({'site': config.wikidot_site, 'page': pagename + '-' + pagecount, 'content': ''.join(output)})
+            save = s.pages.save_one({'site': config.wikidot_site, 'page': 'component:' + pagename + '-' + str(pagecount), 'content': ''.join(output)})
         pagecount += 1
         output = []
         output.append(outstring)
 
 # Final run for output.
 if config.wikidot_api_mode is "ro":
-    file_object = open(pagename + "-" + pagecount, "w")
+    file_object = open(pagename + "-" + str(pagecount), "w")
     file_object.write(''.join(output))
 elif config.wikidot_api_mode is "rw":
-    save = s.pages.save_one({'site': config.wikidot_site, 'page': pagename + '-' + pagecount, 'content': ''.join(output)})
+    save = s.pages.save_one({'site': config.wikidot_site, 'page': pagename + '-' + str(pagecount), 'content': ''.join(output)})
 
 # We'll handle author sort slightly differently using attribution metadata.
-t_author = sorted(t, key=lambda x: x['created_by'].lower())
-t_date = sorted(t, key=lambda x: x['created_at'].lower())
-
-print t
+# t_author = sorted(t, key=lambda x: x['created_by'].lower())
+# t_date = sorted(t, key=lambda x: x['created_at'].lower())
