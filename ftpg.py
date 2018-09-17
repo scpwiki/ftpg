@@ -63,7 +63,7 @@ for chunk in tales:
         t.append(chunk[tale])
 
 # The lambda x stuff is because using itemgetter results in case-sensitive sorting.
-
+t = sorted(t, key=lambda x: x['title'].lower())
 
 for tale in t:
     # Get the actual content of the article.
@@ -83,7 +83,7 @@ for tale in t:
 output = []
 
 # Index is used as a combination Table of Contents and way to organize the dicts we break tales into.
-index = ['#','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+index = ['Misc','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 # Create a dict that will hold our formatted output lists. We'll only move them to output when we're ready and there's
 # room under the 200k character limit.
@@ -93,7 +93,10 @@ for character in index:
 
 for tale in t:
     # We're going to use the same format whether or not there is attribution metadata.
-    tale['attributions'] = '[[user ' + tale['created_by'] + ']] (author)'
+    if tale['created_by'] is None:
+        tale['attributions'] = '(account deleted)'
+    else:
+        tale['attributions'] = '[[user ' + tale['created_by'] + ']] (author)'
 
     # This will be a temp holding variable.
     attribs = []
@@ -120,11 +123,14 @@ for tale in t:
         tale['attributions'] = tale['attributions'][0:-3]
 
     # Build the table, row by row with title, author/attributions, created date, and excerpt.
-    row = '||[[[' + tale['fullname'] + '|]]]||' + tale['attributions'] + '||//' + tale['created_at'] + '//||\n||||||' + tale['excerpt'] + '||\n'
-    if tale['title'][:1].isdigit():
-        t_alpha['#'].append(row.encode("UTF-8"))
-    else:
-        t_alpha[tale['title'][:1].upper()].append(row.encode("UTF-8"))
+    row = '||[[[' + tale['fullname'] + '|]]]||' + tale['attributions'] + '||//' + tale['created_at'][:10] + '//||\n||||||' + tale['excerpt'] + '||\n'
+    try:
+        if tale['title'][:1] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+            t_alpha[tale['title'][:1].upper()].append(row.encode("UTF-8"))
+        else:
+            t_alpha['Misc'].append(row.encode("UTF-8"))
+    except KeyError:
+        continue
 
 # Close out the div we opened for each group.
 for character in index:
@@ -137,9 +143,7 @@ pagecount = 1
 # Convert them to strings and check their lengths.
 for character in index:
     outstring = ''.join(t_alpha[character])
-    # We need to fix an invalid anchor by replacing it with Misc.
-    outstring = outstring.replace("[[# #]]\n", "[[# Misc]]\n")
-    len_output = len(output)
+    len_output = len(''.join(output))
     len_outstring = len(outstring)
     if len_output + len_outstring < 200000:
         output.append(outstring)
