@@ -183,7 +183,7 @@ for tale in t:
 # Tales by Title
 
 # Index is used as a combination Table of Contents and way to organize the dicts we break tales into.
-index = ['Misc','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+index = ['misc','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 for character in index:
     t_alpha[character] = ["[[# " + character + "]]\n[[div class=\"section\"]]\n+++ " + character + "\n[#top ⇑]\n||~ Title||~ Author||~ Created||\n"]
@@ -196,7 +196,7 @@ for tale in t:
         if tale['title'][:1] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
             t_alpha[tale['title'][:1].upper()].append(row.encode("UTF-8"))
         else:
-            t_alpha['Misc'].append(row.encode("UTF-8"))
+            t_alpha['misc'].append(row.encode("UTF-8"))
     except KeyError:
         continue
 
@@ -204,8 +204,11 @@ for tale in t:
 for character in index:
     t_alpha[character].append('[[/div]]\n')
 
+# Sort the dicts.
+t_alpha_sorted = OrderedDict(sorted(t_alpha.items(), key=lambda x: x[0]))
+
 # We've done all our prep, let's get Tales By Title.
-process_output(t_alpha, "tales-by-title")
+process_output(t_alpha_sorted, "tales-by-title")
 
 # We'll handle author sort slightly differently using attribution metadata.
 t = sorted(t, key=lambda x: x['created_by'].lower())
@@ -225,7 +228,7 @@ for tale in t:
                 if author[:1] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
                     t_author[author[:1].upper()].append(row.encode("UTF-8"))
                 else:
-                    t_author['Misc'].append(row.encode("UTF-8"))
+                    t_author['misc'].append(row.encode("UTF-8"))
             except KeyError:
                 continue
     # Otherwise we handle it the same way as tales-by-title.
@@ -234,7 +237,7 @@ for tale in t:
             if tale['created_by'][:1] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
                 t_author[tale['created_by'][:1].upper()].append(row.encode("UTF-8"))
             else:
-                t_author['Misc'].append(row.encode("UTF-8"))
+                t_author['misc'].append(row.encode("UTF-8"))
         except KeyError:
             continue
 
@@ -242,8 +245,11 @@ for tale in t:
 for character in index:
     t_author[character].append('[[/div]]\n')
 
+# Sort the dicts.
+t_author_sorted = OrderedDict(sorted(t_author.items(), key=lambda x: x[0]))
+
 # We've done all our prep, let's get Tales By Author.
-process_output(t_author, "tales-by-author")
+process_output(t_author_sorted, "tales-by-author")
 
 # Tales By Date
 # Rather than a precomputed index, we'll use the first 7 characters of created_at and do it that way.
