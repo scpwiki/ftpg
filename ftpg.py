@@ -140,7 +140,6 @@ for tale in t:
     preview = search('\[\[include component:preview text=(.*)]]', article['content'])
     if preview is not None:
         tale['excerpt'] = preview.group(1)
-        print(tale['fullname'])
     # Lastly, escape any instances of || in the excerpt which Wikidot would translate into making a new column.
     tale['excerpt'] = tale['excerpt'].replace("||", "@<||>@")
 
