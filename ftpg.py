@@ -152,9 +152,8 @@ for tale in t:
     else:
         tale['attributions'] = '[[user ' + tale['created_by'] + ']] (author)'
 
-    # These will be a temp holding variable.
+    # This will be a temp holding variable.
     attribs = []
-    authors = []
 
     # Check the attribution-metadata page first. Look for a cell with a string matching our tale's fullname.
     needle = a.find_all("td", string=tale['fullname'])
@@ -166,16 +165,14 @@ for tale in t:
         attr_type = attr_user.find_next_sibling("td").get_text()
         # Use get_text() to remove the <td> tags.
         attr_user = attr_user.get_text()
+        # Stick the username in the created_by field so they don't end up in misc for tales-by-author
+        tale['created_by'] = attr_user
         # Append it to the list.
         attribs.append("[[user " + attr_user + "]] (" + attr_type + ") _\n")
-        authors.append(attr_user)
 
     # Make a string if we had any work to do in attribution metadata and overwrite attributions.
     if len(attribs) > 0:
         tale['attributions'] = ''.join(attribs)
-        # Make note of this tale because we're going to handle it differently in author sorting.
-        tale['has_attribution_metadata'] = True
-        tale['attribution_authors'] = authors
 
     # Remove the line-break from the last attributed person if it exists.
     if tale['attributions'][-3:] is '_\n':
