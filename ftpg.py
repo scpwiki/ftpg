@@ -81,12 +81,12 @@ def process_output(list, pagename):
     elif config.wikidot_api_mode is "rw":
         # We have to blank the page before submitting a new one or a timeout is likely.
         saveblank = s.pages.save_one({'site': config.wikidot_site, 'page': pagename + '-' + str(pagecount),
-                                      'revision_comment': 'Page prepped with ftpg 1.2. (github.com/scpwiki/ftpg)',
+                                      'revision_comment': 'Page prepped with ftpg 1.3. (github.com/scpwiki/ftpg)',
                                       'content': ''})
         sleep(0.25)
         # Now we can save the page.
         save = s.pages.save_one({'site': config.wikidot_site, 'page': pagename + '-' + str(pagecount),
-                                 'revision_comment': 'Page created with ftpg 1.2. (github.com/scpwiki/ftpg)',
+                                 'revision_comment': 'Page created with ftpg 1.3. (github.com/scpwiki/ftpg)',
                                  'content': ''.join(output)})
         sleep(0.25)
 
@@ -128,18 +128,20 @@ for chunk in tales:
 t = sorted(t, key=lambda x: x['title'].lower())
 
 for tale in t:
-    # Get the actual content of the article.
+    # Get the content of the article.
     article = s.pages.get_one({'site': config.wikidot_site, 'page': tale['fullname']})
-    # Feed the HTML to BeautifulSoup.
-    soup = BeautifulSoup(article['html'], 'html.parser')
-    # Make use of BS4's get_text() to strip out HTML. Remove line breaks.
-    tale['excerpt'] = soup.get_text().replace('\n', ' ')
-    # Split the text before 200 characters at the closest word, and add an ellipsis.
-    tale['excerpt'] = ' '.join(tale['excerpt'][:200 + 1].split(' ')[0:-1]) + '...'
-    # If there is a component:preview module used, use it instead.
+    # If there is a component:preview module used, use it instead of a generated excerpt.
     preview = search('\[\[include component:preview text=(.*)]]', article['content'])
     if preview is not None:
         tale['excerpt'] = preview.group(1)
+    else:
+        # Otherwise, feed the HTML to BeautifulSoup.
+        soup = BeautifulSoup(article['html'], 'html.parser')
+        # Make use of BS4's get_text() to strip out HTML. Remove line breaks.
+        tale['excerpt'] = soup.get_text().replace('\n', ' ')
+        # Split the text before 200 characters at the closest word, and add an ellipsis.
+        tale['excerpt'] = ' '.join(tale['excerpt'][:200 + 1].split(' ')[0:-1]) + '...'
+
     # Lastly, escape any instances of || in the excerpt which Wikidot would translate into making a new column.
     tale['excerpt'] = tale['excerpt'].replace("||", "@<||>@")
 
@@ -183,7 +185,7 @@ for tale in t:
 # Tales by Title
 
 # Index is used as a combination Table of Contents and way to organize the dicts we break tales into.
-index = ['misc','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'misc']
 
 for character in index:
     t_alpha[character] = ["[[# " + character + "]]\n[[div class=\"section\"]]\n+++ " + character + "\n[#top ⇑]\n||~ Title||~ Author||~ Created||\n"]
@@ -204,8 +206,9 @@ for tale in t:
 for character in index:
     t_alpha[character].append('[[/div]]\n')
 
-# Sort the dicts.
-t_alpha_sorted = OrderedDict(sorted(t_alpha.items(), key=lambda x: x[0]))
+# Dict to tuple to OrderedDict, this needs cleanup but is functional.
+t_alpha_tuples = [(key, t_alpha[key]) for key in index]
+t_alpha_sorted = OrderedDict(t_alpha_tuples)
 
 # We've done all our prep, let's get Tales By Title.
 process_output(t_alpha_sorted, "tales-by-title")
@@ -221,39 +224,32 @@ for tale in t:
     row = '||[[[' + tale['fullname'] + '|]]]||' + tale['attributions'] + '||//' + tale['created_at'][:10]\
           + '//||\n||||||' + tale['excerpt'] + '||\n'
 
-    # If there are multiple authors, give them each their own credit in the list.
-    if 'has_attribution_metadata' in tale:
-        for author in tale['attribution_authors']:
-            try:
-                if author[:1] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
-                    t_author[author[:1].upper()].append(row.encode("UTF-8"))
-                else:
-                    t_author['misc'].append(row.encode("UTF-8"))
-            except KeyError:
-                continue
-    # Otherwise we handle it the same way as tales-by-title.
-    else:
-        try:
-            if tale['created_by'][:1] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
-                t_author[tale['created_by'][:1].upper()].append(row.encode("UTF-8"))
-            else:
-                t_author['misc'].append(row.encode("UTF-8"))
-        except KeyError:
-            continue
+    # Insert the row. Giving every credited author their own row breaks the sort due to the order of operations.
+    try:
+        if tale['created_by'][:1] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+            t_author[tale['created_by'][:1].upper()].append(row.encode("UTF-8"))
+        else:
+            t_author['misc'].append(row.encode("UTF-8"))
+    except KeyError:
+        continue
 
 # Close out the div we opened for each group.
 for character in index:
     t_author[character].append('[[/div]]\n')
 
 # Sort the dicts.
-t_author_sorted = OrderedDict(sorted(t_author.items(), key=lambda x: x[0]))
+t_author_tuples = [(key, t_author[key]) for key in index]
+t_author_sorted = OrderedDict(t_author_tuples)
 
 # We've done all our prep, let's get Tales By Author.
 process_output(t_author_sorted, "tales-by-author")
 
 # Tales By Date
 # Rather than a precomputed index, we'll use the first 7 characters of created_at and do it that way.
+# You might wonder why we sort the big list and then again later. This is so the indices are added in the correct order.
+t = sorted(t, key=lambda x: x['created_at'])
 
+date_index = []
 for tale in t:
     # Build the table, row by row with title, author/attributions, created date, and excerpt.
     row = '||[[[' + tale['fullname'] + '|]]]||' + tale['attributions'] + '||//' + tale['created_at'][:10]\
@@ -265,7 +261,8 @@ for tale in t:
             # We've already got a list for this month, just add the row.
             t_date[tale['created_at'][:7]].append(row.encode("UTF-8"))
         else:
-            # Put the header in, and then add the row.
+            # Add to our index, Put the header in, and then add the row.
+            date_index.append(tale['created_at'][:7])
             t_date[tale['created_at'][:7]] = ["[[# " + tale['created_at'][:7] + "]]\n[[div class=\"section\"]]\n+++ " + month_name[int(tale['created_at'][5:7])] + " " + tale['created_at'][:4] + "\n[#top ⇑]\n||~ Title||~ Author||~ Created||\n"]
             t_date[tale['created_at'][:7]].append(row.encode("UTF-8"))
     except KeyError:
@@ -275,8 +272,9 @@ for tale in t:
 for item in t_date:
     t_date[item].append('[[/div]]\n')
 
-# Our usual sorting method doesn't work for dates, we need to force some order on the list.
-t_date_sorted = OrderedDict(sorted(t_date.items(), key=lambda x: x[0]))
+# Sort the dicts.
+t_date_tuples = [(key, t_date[key]) for key in date_index]
+t_date_sorted = OrderedDict(t_date_tuples)
 
 # We've done all our prep, let's get Tales By Date.
 process_output(t_date_sorted, "tales-by-date")
