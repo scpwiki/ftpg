@@ -67,7 +67,8 @@ def process_output(list, pagename):
                 file_object.write(''.join(output))
             elif config.wikidot_api_mode is "rw":
                 save = s.pages.save_one(
-                    {'site': config.wikidot_site, 'page': 'component:' + pagename + '-' + str(pagecount),
+                    {'site': config.api_site, 'page': 'includes:' + pagename + '-' + str(pagecount),
+                     'revision_comment': 'Page created with ftpg 1.4. (github.com/scpwiki/ftpg)',
                      'content': ''.join(output)})
             output = []
             output.append(outstring)
@@ -80,13 +81,13 @@ def process_output(list, pagename):
         file_object.write(''.join(output))
     elif config.wikidot_api_mode is "rw":
         # We have to blank the page before submitting a new one or a timeout is likely.
-        saveblank = s.pages.save_one({'site': config.wikidot_site, 'page': pagename + '-' + str(pagecount),
-                                      'revision_comment': 'Page prepped with ftpg 1.3. (github.com/scpwiki/ftpg)',
+        saveblank = s.pages.save_one({'site': config.api_site, 'page': 'includes:' + pagename + '-' + str(pagecount),
+                                      'revision_comment': 'Page prepped with ftpg 1.4. (github.com/scpwiki/ftpg)',
                                       'content': ''})
         sleep(0.25)
         # Now we can save the page.
-        save = s.pages.save_one({'site': config.wikidot_site, 'page': pagename + '-' + str(pagecount),
-                                 'revision_comment': 'Page created with ftpg 1.3. (github.com/scpwiki/ftpg)',
+        save = s.pages.save_one({'site': config.api_site, 'page': 'includes:' + pagename + '-' + str(pagecount),
+                                 'revision_comment': 'Page created with ftpg 1.4. (github.com/scpwiki/ftpg)',
                                  'content': ''.join(output)})
         sleep(0.25)
 
