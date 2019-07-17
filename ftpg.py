@@ -82,12 +82,12 @@ def process_output(list, pagename):
     elif config.wikidot_api_mode is "rw":
         # We have to blank the page before submitting a new one or a timeout is likely.
         saveblank = s.pages.save_one({'site': config.api_site, 'page': 'includes:' + pagename + '-' + str(pagecount),
-                                      'revision_comment': 'Page prepped with ftpg 1.4. (github.com/scpwiki/ftpg)',
+                                      'revision_comment': 'Page prepped with ftpg 1.5. (github.com/scpwiki/ftpg)',
                                       'content': ''})
         sleep(0.25)
         # Now we can save the page.
         save = s.pages.save_one({'site': config.api_site, 'page': 'includes:' + pagename + '-' + str(pagecount),
-                                 'revision_comment': 'Page created with ftpg 1.4. (github.com/scpwiki/ftpg)',
+                                 'revision_comment': 'Page created with ftpg 1.5. (github.com/scpwiki/ftpg)',
                                  'content': ''.join(output)})
         sleep(0.25)
 
@@ -166,7 +166,7 @@ for tale in t:
         attr_type = attr_user.find_next_sibling("td").get_text()
         # Use get_text() to remove the <td> tags.
         attr_user = attr_user.get_text()
-        # Stick the username in the created_by field so they don't end up in misc for tales-by-author
+        # Stick the username in the created_by field so they don't end up in Misc for tales-by-author
         tale['created_by'] = attr_user
         # Append it to the list.
         attribs.append("[[user " + attr_user + "]] (" + attr_type + ") _\n")
@@ -183,7 +183,7 @@ for tale in t:
 # Tales by Title
 
 # Index is used as a combination Table of Contents and way to organize the dicts we break tales into.
-index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'misc']
+index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Misc']
 
 for character in index:
     t_alpha[character] = ["[[# " + character + "]]\n[[div class=\"section\"]]\n+++ " + character + "\n[#top ⇑]\n||~ Title||~ Author||~ Created||\n"]
@@ -196,7 +196,7 @@ for tale in t:
         if tale['title'][:1] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
             t_alpha[tale['title'][:1].upper()].append(row.encode("UTF-8"))
         else:
-            t_alpha['misc'].append(row.encode("UTF-8"))
+            t_alpha['Misc'].append(row.encode("UTF-8"))
     except KeyError:
         continue
 
@@ -227,7 +227,7 @@ for tale in t:
         if tale['created_by'][:1] in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
             t_author[tale['created_by'][:1].upper()].append(row.encode("UTF-8"))
         else:
-            t_author['misc'].append(row.encode("UTF-8"))
+            t_author['Misc'].append(row.encode("UTF-8"))
     except KeyError:
         continue
 
